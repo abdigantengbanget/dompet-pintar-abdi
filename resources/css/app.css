@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    body {
+        font-family: "Arial", sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    header {
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+    }
+
+    footer {
+        background-color: #f1f1f1;
+    }
+
+    .table th,
+    .table td {
+        vertical-align: middle;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f2f2f2;
+    }
+}
