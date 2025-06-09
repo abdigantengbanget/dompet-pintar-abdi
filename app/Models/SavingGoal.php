@@ -14,6 +14,10 @@ class SavingGoal extends Model
         'name',
         'amount',
         'due_date',
+        'monthly_income',
+        'installments',
+        'frequency',
+        'saving_day',
     ];
 
     public function user()

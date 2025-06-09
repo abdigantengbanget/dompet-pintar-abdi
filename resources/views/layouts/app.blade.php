@@ -8,8 +8,17 @@
 </head>
 <body class="bg-gray-100 font-sans">
     <header class="bg-white shadow-md">
-        <div class="container mx-auto p-4">
+        <div class="container mx-auto p-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600">Dompet Pintar</h1>
+
+            @auth
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="text-sm text-red-600 hover:underline">
+                        Logout
+                    </button>
+                </form>
+            @endauth
         </div>
     </header>
 
@@ -18,7 +27,7 @@
     </main>
 
     <footer class="text-center text-gray-500 py-4 text-sm">
-        &copy; 2025 Dompet Pintar. Abdi nurhaqqin.
+        &copy; 2025 Dompet Pintar. Abdi Nurhaqqin.
     </footer>
 </body>
 </html>
