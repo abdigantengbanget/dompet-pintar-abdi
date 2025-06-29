@@ -1,4 +1,5 @@
 <?php
+// app/Models/SavingGoal.php (Diperbaiki)
 
 namespace App\Models;
 
@@ -9,17 +10,24 @@ class SavingGoal extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'user_id',
         'name',
         'amount',
         'due_date',
-        'monthly_income',
-        'installments',
         'frequency',
-        'saving_day',
+        'installments',
+        'current_amount', // <--- INI ADALAH PERBAIKANNYA
     ];
 
+    /**
+     * Mendefinisikan relasi "belongs-to": SavingGoal ini dimiliki oleh seorang User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);

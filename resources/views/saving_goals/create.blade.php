@@ -1,21 +1,23 @@
+<!-- resources/views/saving_goals/create.blade.php (Diperbaiki) -->
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-xl mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Tambah Saving Goal</h1>
-
-    @if ($errors->any())
-        <div class="bg-red-100 text-red-600 p-2 mb-4 rounded">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>- {{ $error }}</li>
-                @endforeach
-            </ul>
+<div class="max-w-2xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 sm:p-8">
+        <div class="mb-6 border-b border-slate-200 dark:border-slate-700 pb-5">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+                Tambah Goal Baru
+            </h1>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Tentukan tujuan finansial baru Anda.
+            </p>
         </div>
-    @endif
-
-    <form action="{{ route('saving-goals.store') }}" method="POST">
-        @include('saving_goals._form')
-    </form>
+        
+        <form action="{{ route('saving-goals.store') }}" method="POST">
+            @csrf
+            {{-- Meng-include form parsial --}}
+            @include('saving_goals._form', ['savingGoal' => new \App\Models\SavingGoal()])
+        </form>
+    </div>
 </div>
 @endsection

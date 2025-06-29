@@ -1,105 +1,72 @@
-<!-- Nama Saving Goal -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Nama Tujuan</label>
-    <input
-        type="text"
-        name="name"
-        value="{{ old('name', $savingGoal->name ?? '') }}"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        maxlength="255"
-        required
-    >
+<!-- resources/views/saving_goals/_form.blade.php (Diperbaiki) -->
+
+{{-- Menampilkan semua error validasi di bagian atas --}}
+@if ($errors->any())
+    <div class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg" role="alert">
+        <p class="font-bold">Oops! Terjadi kesalahan:</p>
+        <ul class="mt-2 list-disc list-inside text-sm">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+<div class="space-y-6">
+    {{-- Nama Tujuan --}}
+    <div>
+        <label for="name" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Nama Tujuan
+        </label>
+        <div class="mt-1">
+            <input type="text" name="name" id="name" value="{{ old('name', $savingGoal->name ?? '') }}" required placeholder="Contoh: Beli HP Baru, Dana Darurat"
+                   class="block w-full rounded-lg border-slate-300 dark:bg-slate-900 dark:border-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+        </div>
+    </div>
+
+    {{-- Target Nominal --}}
+    <div>
+        <label for="amount" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Target Nominal (Rp)
+        </label>
+        <div class="mt-1">
+            <input type="number" name="amount" id="amount" value="{{ old('amount', $savingGoal->amount ?? '') }}" required placeholder="Contoh: 15000000"
+                   class="block w-full rounded-lg border-slate-300 dark:bg-slate-900 dark:border-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+        </div>
+    </div>
+
+    {{-- Target Tanggal Selesai --}}
+    <div>
+        <label for="due_date" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Target Tanggal Selesai
+        </label>
+        <div class="mt-1">
+            <input type="date" name="due_date" id="due_date" value="{{ old('due_date', $savingGoal->due_date ? \Carbon\Carbon::parse($savingGoal->due_date)->format('Y-m-d') : '') }}" required 
+                   class="block w-full rounded-lg border-slate-300 dark:bg-slate-900 dark:border-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+        </div>
+    </div>
+
+    {{-- Frekuensi Menabung --}}
+    <div>
+        <label for="frequency" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Frekuensi Menabung
+        </label>
+        <div class="mt-1">
+            <select name="frequency" id="frequency" required 
+                    class="block w-full rounded-lg border-slate-300 dark:bg-slate-900 dark:border-slate-700 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                <option value="monthly" {{ old('frequency', $savingGoal->frequency ?? 'monthly') == 'monthly' ? 'selected' : '' }}>Bulanan</option>
+                <option value="weekly" {{ old('frequency', $savingGoal->frequency ?? '') == 'weekly' ? 'selected' : '' }}>Mingguan</option>
+            </select>
+        </div>
+    </div>
 </div>
 
-<!-- Nominal Target -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Nominal Target</label>
-    <input
-        type="number"
-        name="amount"
-        min="0"
-        step="0.01"
-        value="{{ old('amount', $savingGoal->amount ?? '') }}"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        required
-    >
-</div>
-
-<!-- Deadline -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Tanggal Deadline</label>
-    <input
-        type="date"
-        name="due_date"
-        min="{{ date('Y-m-d') }}"
-        value="{{ old('due_date', isset($savingGoal->due_date) ? $savingGoal->due_date->format('Y-m-d') : '') }}"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        required
-    >
-</div>
-
-<!-- Penghasilan Bulanan -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Penghasilan Bulanan</label>
-    <input
-        type="number"
-        name="monthly_income"
-        min="0"
-        step="0.01"
-        value="{{ old('monthly_income', $savingGoal->monthly_income ?? '') }}"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        required
-    >
-</div>
-
-<!-- Jumlah Cicilan -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Jumlah Cicilan</label>
-    <input
-        type="number"
-        name="installments"
-        min="1"
-        step="1"
-        value="{{ old('installments', $savingGoal->installments ?? '') }}"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        required
-    >
-</div>
-
-<!-- Frekuensi -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Frekuensi Menabung</label>
-    <select
-        name="frequency"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        required
-    >
-        <option value="weekly" {{ old('frequency', $savingGoal->frequency ?? '') == 'weekly' ? 'selected' : '' }}>Mingguan</option>
-        <option value="monthly" {{ old('frequency', $savingGoal->frequency ?? '') == 'monthly' ? 'selected' : '' }}>Bulanan</option>
-    </select>
-</div>
-
-<!-- Tanggal Menabung -->
-<div class="mb-4">
-    <label class="block text-sm font-medium text-gray-700">Tanggal Menabung (1-31)</label>
-    <input
-        type="number"
-        name="saving_day"
-        min="1"
-        max="31"
-        step="1"
-        value="{{ old('saving_day', $savingGoal->saving_day ?? '') }}"
-        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-        required
-    >
-</div>
-
-<!-- Tombol Submit -->
-<div class="mt-4">
-    <button
-        type="submit"
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-    >
+{{-- Tombol Aksi --}}
+<div class="flex items-center justify-end mt-8 border-t border-slate-200 dark:border-slate-700 pt-6 space-x-4">
+    <a href="{{ route('dashboard') }}" class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+        Batal
+    </a>
+    <button type="submit" class="inline-flex items-center px-6 py-2.5 bg-teal-600 border border-transparent rounded-lg font-semibold text-sm text-white uppercase hover:bg-teal-700 transition">
         Simpan
     </button>
 </div>

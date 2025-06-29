@@ -3,52 +3,106 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends Controller
 {
-    // Redirect ke Google OAuth
+    /**
+     * Redirect the user to the Google authentication page.
+     */
     public function redirectToGoogle()
     {
         return Socialite::driver('google')->redirect();
     }
 
-    // Callback dari Google
+    /**
+     * Obtain the user information from Google.
+     */
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Cari user berdasarkan email
             $user = User::where('email', $googleUser->getEmail())->first();
 
-            if (!$user) {
-                // Buat user baru jika belum ada
+            if ($user) {
+                $user->update([
+                    'google_id' => $googleUser->getId(),
+                    'google_token' => $googleUser->token,
+                    'google_refresh_token' => $googleUser->refreshToken,
+                ]);
+            } else {
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
-                    // password bisa dikosongkan karena login via Google
-                    'password' => bcrypt('passworddefault'),
+                    'google_id' => $googleUser->getId(),
+                    'password' => bcrypt(str()->random(16)),
+                    'google_token' => $googleUser->token,
+                    'google_refresh_token' => $googleUser->refreshToken,
                 ]);
             }
 
-            // Login user
             Auth::login($user);
 
-            // Redirect ke halaman tujuan setelah login
-            return redirect()->intended('/saving-goals');
+            // Setelah login, cek kelengkapan profilnya secara manual
+            if (!$user->job || !$user->monthly_income) {
+                return redirect()->route('profile.create');
+            }
+
+            // Jika profil sudah lengkap, alihkan ke halaman beranda
+            return redirect()->route('saving-goals.index');
 
         } catch (\Exception $e) {
-            return redirect('/login')->with('error', 'Login gagal: ' . $e->getMessage());
+            Log::error('Google Login Error: ' . $e->getMessage());
+            return redirect('/login')->with('error', 'Terjadi kesalahan saat login dengan Google. Silakan coba lagi.');
         }
     }
 
-    // Logout user
-    public function logout()
+    /**
+     * Handle an authentication attempt via email/password.
+     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            $user = Auth::user();
+
+            // Tambahkan juga pengecekan di sini untuk konsistensi
+            if (!$user->job || !$user->monthly_income) {
+                return redirect()->route('profile.create');
+            }
+
+            return redirect()->intended(route('saving-goals.index'));
+        }
+
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match our records.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Log the user out of the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function logout(Request $request)
     {
         Auth::logout();
-        return redirect('/login');
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }

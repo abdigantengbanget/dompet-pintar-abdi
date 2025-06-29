@@ -1,18 +1,15 @@
 <?php
+// app/Http/Controllers/SavingGoalController.php (Versi Final dengan Logika Menyisihkan Dana)
 
 namespace App\Http\Controllers;
 
 use App\Models\SavingGoal;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 
 class SavingGoalController extends Controller
 {
-    public function index()
-    {
-        $goals = SavingGoal::where('user_id', auth()->id())->get();
-        return view('saving_goals.index', compact('goals'));
-    }
-
     public function create()
     {
         return view('saving_goals.create');
@@ -22,70 +19,111 @@ class SavingGoalController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
-            'due_date' => 'required|date|after_or_equal:today',
-            'monthly_income' => 'required|numeric|min:0',
-            'installments' => 'required|integer|min:1',
-            'frequency' => 'required|in:weekly,monthly',
-            'saving_day' => 'required|integer|between:1,31',
+            'amount' => 'required|numeric|min:1000',
+            'due_date' => 'required|date|after:today',
+            'frequency' => 'required|in:monthly,weekly',
         ]);
 
-        $installment_value = $validated['amount'] / $validated['installments'];
+        $request->user()->savingGoals()->create([
+            'name' => $validated['name'],
+            'amount' => $validated['amount'],
+            'due_date' => $validated['due_date'],
+            'frequency' => $validated['frequency'],
+            'installments' => $this->calculateInstallments(
+                $validated['amount'],
+                $validated['due_date'],
+                $validated['frequency']
+            ),
+        ]);
 
-        if ($installment_value > $validated['monthly_income']) {
-            return back()->withErrors([
-                'amount' => 'Jumlah cicilan melebihi penghasilan bulanan Anda.'
-            ])->withInput();
-        }
-
-        $data = $validated;
-        $data['user_id'] = auth()->id();
-
-        SavingGoal::create($data);
-
-        return redirect()->route('saving-goals.index')
-            ->with('success', 'Saving goal berhasil ditambahkan!');
+        return redirect()->route('dashboard')->with('success', 'Target tabungan berhasil ditambahkan!');
     }
 
-    public function edit($id)
+    public function edit(SavingGoal $savingGoal)
     {
-        $savingGoal = SavingGoal::where('user_id', auth()->id())->findOrFail($id);
+        if ($savingGoal->user_id !== auth()->id()) {
+            abort(403, 'Aksi tidak diizinkan.');
+        }
         return view('saving_goals.edit', compact('savingGoal'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, SavingGoal $savingGoal)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
-            'due_date' => 'required|date|after_or_equal:today',
-            'monthly_income' => 'required|numeric|min:0',
-            'installments' => 'required|integer|min:1',
-            'frequency' => 'required|in:weekly,monthly',
-            'saving_day' => 'required|integer|between:1,31',
-        ]);
-
-        $installment_value = $validated['amount'] / $validated['installments'];
-
-        if ($installment_value > $validated['monthly_income']) {
-            return back()->withErrors([
-                'amount' => 'Jumlah cicilan melebihi penghasilan bulanan Anda.'
-            ])->withInput();
+        if ($savingGoal->user_id !== auth()->id()) {
+            abort(403, 'Aksi tidak diizinkan.');
         }
 
-        $goal = SavingGoal::where('user_id', auth()->id())->findOrFail($id);
-        $goal->update($validated);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:1000',
+            'due_date' => 'required|date|after:today',
+            'frequency' => 'required|in:monthly,weekly',
+        ]);
 
-        return redirect()->route('saving-goals.index')
-            ->with('success', 'Saving goal berhasil diperbarui!');
+        $validated['installments'] = $this->calculateInstallments(
+            $validated['amount'],
+            $validated['due_date'],
+            $validated['frequency']
+        );
+
+        $savingGoal->update($validated);
+
+        return redirect()->route('dashboard')->with('success', 'Target tabungan berhasil diperbarui!');
     }
 
-    public function destroy($id)
+    public function destroy(SavingGoal $savingGoal)
     {
-        $goal = SavingGoal::where('user_id', auth()->id())->findOrFail($id);
-        $goal->delete();
+        if ($savingGoal->user_id !== auth()->id()) {
+            abort(403, 'Aksi tidak diizinkan.');
+        }
+        $savingGoal->delete();
+        return redirect()->route('dashboard')->with('success', 'Target tabungan berhasil dihapus!');
+    }
 
-        return redirect()->route('saving-goals.index')
-            ->with('success', 'Saving goal berhasil dihapus!');
+    // VVV INI METHOD BARU YANG DITAMBAHKAN VVV
+    /**
+     * Menandai dana cicilan telah disisihkan.
+     */
+    public function markAsSaved(SavingGoal $savingGoal): RedirectResponse
+    {
+        if ($savingGoal->user_id !== auth()->id()) {
+            abort(403, 'Aksi tidak diizinkan.');
+        }
+
+        $amountToSave = $savingGoal->installments;
+        $newAmount = $savingGoal->current_amount + $amountToSave;
+        
+        if ($newAmount > $savingGoal->amount) {
+            $newAmount = $savingGoal->amount;
+        }
+
+        $savingGoal->update(['current_amount' => $newAmount]);
+        
+        // Buat transaksi 'pengeluaran' untuk sinkronisasi dengan dasbor
+        $savingGoal->user->transactions()->create([
+            'name' => 'Menabung untuk: ' . $savingGoal->name,
+            'amount' => $amountToSave,
+            'type' => 'pengeluaran',
+            'transaction_date' => now(),
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Dana untuk "' . $savingGoal->name . '" berhasil disisihkan!');
+    }
+
+    private function calculateInstallments($amount, $dueDate, $frequency): int
+    {
+        $startDate = Carbon::now();
+        $endDate = Carbon::parse($dueDate);
+
+        $periods = 1;
+        if ($endDate->isFuture()) {
+            if ($frequency === 'monthly') {
+                $periods = max(1, $startDate->diffInMonths($endDate) + 1);
+            } else {
+                $periods = max(1, $startDate->diffInWeeks($endDate) + 1);
+            }
+        }
+        
+        return (int) ceil($amount / $periods);
     }
 }

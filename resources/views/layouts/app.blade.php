@@ -1,33 +1,39 @@
+<!-- resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dompet Pintar</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ config('app.name', 'Dompet Pintar') }}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-100 font-sans">
-    <header class="bg-white shadow-md">
-        <div class="container mx-auto p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-blue-600">Dompet Pintar</h1>
+<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+    <div class="min-h-screen">
+        
+        @auth
+            @include('layouts.navigation')
+        @endauth
 
-            @auth
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="text-sm text-red-600 hover:underline">
-                        Logout
-                    </button>
-                </form>
-            @endauth
-        </div>
-    </header>
+        <!-- Page Content -->
+        <main>
+            @yield('content')
+        </main>
+    </div>
 
-    <main class="py-6">
-        @yield('content')
-    </main>
-
-    <footer class="text-center text-gray-500 py-4 text-sm">
-        &copy; 2025 Dompet Pintar. Abdi Nurhaqqin.
+    <footer class="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
+        © {{ date('Y') }} Dompet Pintar. Dibuat oleh Abdi Nurhaqqin.
     </footer>
+    
+    @stack('scripts') <!-- Tambahkan ini untuk script per halaman (seperti Chart.js) -->
 </body>
 </html>

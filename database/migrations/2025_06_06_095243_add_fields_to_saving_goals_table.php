@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->decimal('monthly_income', 12, 2)->after('user_id');
             $table->integer('installments')->after('monthly_income');
             $table->enum('frequency', ['weekly', 'monthly'])->after('installments');
-            $table->unsignedTinyInteger('saving_day')->after('frequency');
+          
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration {
                 'monthly_income',
                 'installments',
                 'frequency',
-                'saving_day',
+              
             ]);
         });
     }
