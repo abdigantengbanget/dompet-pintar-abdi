@@ -9,8 +9,7 @@ return new class extends Migration {
     {
         Schema::table('saving_goals', function (Blueprint $table) {
             $table->decimal('monthly_income', 12, 2)->after('user_id');
-            $table->integer('installments')->after('monthly_income');
-            $table->enum('frequency', ['weekly', 'monthly'])->after('installments');
+            
           
         });
     }
@@ -20,8 +19,7 @@ return new class extends Migration {
         Schema::table('saving_goals', function (Blueprint $table) {
             $table->dropColumn([
                 'monthly_income',
-                'installments',
-                'frequency',
+                
               
             ]);
         });

@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('job')->nullable()->after('name');
-            $table->decimal('monthly_income', 15, 2)->nullable()->after('job');
+            
+           
         });
     }
 
@@ -22,8 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['job', 'monthly_income']);
-        });
+        
     }
 };
